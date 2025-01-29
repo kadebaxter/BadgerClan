@@ -33,8 +33,58 @@ app.MapGet("/", () => "Sample BadgerClan bot.  Modify the code in Program.cs to 
 app.MapPost("/", (MoveRequest request) =>
 {
     app.Logger.LogInformation("Received move request for game {gameId} turn {turnNumber}", request.GameId, request.TurnNumber);
+    var currentTeam = new Team(request.YourTeamId)
+    {
+        Medpacs = request.Medpacs
+    };
     var myMoves = new List<Move>();
+   // var myteam = state.TeamList.FirstOrDefault(t => t.Id == state.CurrentTeamId);
 
+    var myTeam = new List<UnitDto>();
+    var enemies = request.Units.Where(u => u.Team != request.YourTeamId);
+    foreach (UnitDto unit in request.Units)
+    {
+        if (unit.Team == request.YourTeamId)
+        {
+            myTeam.Add(unit);
+        }
+    }
+
+    foreach (UnitDto unit in myTeam)
+    {
+        var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
+
+        if (closest != null)
+        {
+            //Console.WriteLine($"{closest.Location.Distance(unit.Location)} vs. {closest.AttackDistance}");
+            if (enemies.Count() <= 10 || closest.Location.Distance(unit.Location) <= 4)
+            {
+                Console.WriteLine($"{unit.Health}:Health, {closest.Health}:EnemyHealth");
+                myMoves.Add(StepToClosest(unit, closest, request));
+                myMoves.Add(AttackClosest(unit, closest));
+            }
+            else if ( (closest.Location.Distance(unit.Location) <= 18) && (closest.Type == UnitType.Archer.ToString()) )
+            {
+                Console.WriteLine("Run From Archer " + closest.Location.Distance(unit.Location));
+                myMoves.Add(StepAway(unit, closest, request));
+            }
+            else if ( (closest.Location.Distance(unit.Location) <= 15) && (closest.Type == UnitType.Knight.ToString()) )
+            {
+                Console.WriteLine("Run From Knight " + closest.Location.Distance(unit.Location));
+                myMoves.Add(StepAway(unit, closest, request));
+            }
+            else if (currentTeam.Medpacs > 0 && unit.Health < unit.MaxHealth)
+            {
+                Console.WriteLine("Used MedPac");
+                myMoves.Add(new Move(MoveType.Medpac, unit.Id, unit.Location));
+            }
+
+            //if (unit.Type == UnitType.Archer.ToString())
+            //{
+
+            //}
+        }
+    }
     // ***************************************************************************
     // ***************************************************************************
     // **
@@ -46,5 +96,63 @@ app.MapPost("/", (MoveRequest request) =>
     // ***************************************************************************
     return new MoveResponse(myMoves);
 });
+
+Move StepAway(UnitDto unit, UnitDto closest, MoveRequest request)
+{
+    Random rnd = new Random();
+
+    var target = unit.Location.Away(closest.Location);
+
+    var neighbors = unit.Location.Neighbors();
+
+    while (request.Units.Any(u => u.Location == target))
+    {
+        if (neighbors.Any())
+        {
+            var i = rnd.Next(0, neighbors.Count() - 1);
+            target = neighbors[i];
+            neighbors.RemoveAt(i);
+        }
+        else
+        {
+            neighbors = unit.Location.MoveEast(1).Neighbors();
+        }
+    }
+
+    var move = new Move(MoveType.Walk, unit.Id, target);
+    return move;
+}
+
+Move StepToClosest(UnitDto unit, UnitDto closest, MoveRequest request)
+{
+    Random rnd = new Random();
+
+    var target = unit.Location.Toward(closest.Location);
+
+    var neighbors = unit.Location.Neighbors();
+
+    while (request.Units.Any(u => u.Location == target))
+    {
+        if (neighbors.Any())
+        {
+            var i = rnd.Next(0, neighbors.Count() - 1);
+            target = neighbors[i];
+            neighbors.RemoveAt(i);
+        }
+        else
+        {
+            neighbors = unit.Location.MoveEast(1).Neighbors();
+        }
+    }
+
+    var move = new Move(MoveType.Walk, unit.Id, target);
+    return move;
+}
+
+Move AttackClosest(UnitDto unit, UnitDto closest)
+{
+    var attack = new Move(MoveType.Attack, unit.Id, closest.Location);
+    return attack;
+}
 
 app.Run();
