@@ -47,31 +47,44 @@ app.MapPost("/", (MoveRequest request) =>
         }
     }
 
-    foreach (UnitDto unit in myTeam)
+    foreach (UnitDto unit in myTeam.OrderByDescending(u => u.Type == "Knight"))
     {
         var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
-
+        var pointman = myTeam.OrderBy(u => u.Id).FirstOrDefault();
+        Console.WriteLine($"Board:{request.BoardSize}, UnitR:{unit.Location.R}, UnitQ:{unit.Location.Q}");
         if (closest != null)
         {
+            if (pointman != null && unit.Id != pointman.Id &&
+                unit.Location.Distance(pointman.Location) > 5)
+            {
+                //Don't split up
+                var toward = unit.Location.Toward(pointman.Location);
+                myMoves.Add(new Move(MoveType.Walk, unit.Id, toward));
+                myMoves.Add(new Move(MoveType.Walk, unit.Id, toward.Toward(pointman.Location)));
+            }
+            //else if ()
+            //{
+            //    myMoves.Add(StepToClosest(unit, closest, request));
+            //    myMoves.Add(AttackClosest(unit, closest));
+            //}
             //Console.WriteLine($"{closest.Location.Distance(unit.Location)} vs. {closest.AttackDistance}");
-            if (enemies.Count() <= 10 || closest.Location.Distance(unit.Location) <= 4)
+            else if (enemies.Count() <= 10 || closest.Location.Distance(unit.Location) <= 4 || unit.Location.Q == 0 || unit.Location.R == 0 || unit.Location.R == request.BoardSize || unit.Location.Q == request.BoardSize)
             {
                 //Console.WriteLine($"{unit.Health}:Health, {closest.Health}:EnemyHealth");
                 myMoves.Add(StepToClosest(unit, closest, request));
                 myMoves.Add(AttackClosest(unit, closest));
             }
-            else if ( (closest.Location.Distance(unit.Location) <= 18) && (closest.Type == UnitType.Archer.ToString()) )
+            else if ( (closest.Location.Distance(unit.Location) <= 15) && (closest.Type == UnitType.Archer.ToString()) )
             {
                 Console.WriteLine("Run From Archer " + closest.Location.Distance(unit.Location));
-                myMoves.Add(StepAway(unit, closest, request));
+                myMoves.Add(StepAway(unit, closest.Location, request));
             }
             else if ( (closest.Location.Distance(unit.Location) <= 15) && (closest.Type == UnitType.Knight.ToString()))
             {
                 Console.WriteLine("Run From Knight " + closest.Location.Distance(unit.Location));
-                myMoves.Add(StepAway(unit, closest, request));
-            }
-            
-            if (request.Medpacs > 0 && unit.Health < unit.MaxHealth)
+                myMoves.Add(StepAway(unit, closest.Location, request));
+            }        
+            else if (request.Medpacs > 0 && unit.Health < unit.MaxHealth)
             {
                 Console.WriteLine("Used MedPac");
                 myMoves.Add(new Move(MoveType.Medpac, unit.Id, unit.Location));
@@ -95,11 +108,11 @@ app.MapPost("/", (MoveRequest request) =>
     return new MoveResponse(myMoves);
 });
 
-Move StepAway(UnitDto unit, UnitDto closest, MoveRequest request)
+Move StepAway(UnitDto unit, Coordinate closest, MoveRequest request)
 {
     Random rnd = new Random();
 
-    var target = unit.Location.Away(closest.Location);
+    var target = unit.Location.Away(closest);
 
     var neighbors = unit.Location.Neighbors();
 
