@@ -44,9 +44,9 @@ app.MapPost("/", (GameState request) =>
     var myMoves = new List<Move>();
    // var myteam = state.TeamList.FirstOrDefault(t => t.Id == state.CurrentTeamId);
 
-    var myTeam = new List<UnitDto>();
+    var myTeam = new List<Unit>();
     var enemies = request.Units.Where(u => u.Team != request.YourTeamId);
-    foreach (UnitDto unit in request.Units)
+    foreach (Unit unit in request.Units)
     {
         if (unit.Team == request.YourTeamId)
         {
@@ -54,7 +54,7 @@ app.MapPost("/", (GameState request) =>
         }
     }
 
-    foreach (UnitDto unit in myTeam.OrderByDescending(u => u.Type == "Knight"))
+    foreach (Unit unit in myTeam.OrderByDescending(u => u.Type == "Knight"))
     {
         var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
         var pointman = myTeam.OrderBy(u => u.Id).FirstOrDefault();
@@ -113,12 +113,11 @@ app.MapPost("/", (GameState request) =>
     // ***************************************************************************
     // ***************************************************************************
 
-    var myMoves = SuperSimpleExampleBot.MakeMoves(request);//Very simple bot example.  Delete this line when you write your own bot.
-
+    
     return new MoveResponse(myMoves);
 });
 
-Move StepAway(UnitDto unit, Coordinate closest, MoveRequest request)
+Move StepAway(Unit unit, Coordinate closest, GameState state)
 {
     Random rnd = new Random();
 
@@ -126,7 +125,7 @@ Move StepAway(UnitDto unit, Coordinate closest, MoveRequest request)
 
     var neighbors = unit.Location.Neighbors();
 
-    while (request.Units.Any(u => u.Location == target))
+    while (state.Units.Any(u => u.Location == target))
     {
         if (neighbors.Any())
         {
@@ -144,7 +143,7 @@ Move StepAway(UnitDto unit, Coordinate closest, MoveRequest request)
     return move;
 }
 
-Move StepToClosest(UnitDto unit, UnitDto closest, MoveRequest request)
+Move StepToClosest(Unit unit, Unit closest, GameState state)
 {
     Random rnd = new Random();
 
@@ -152,8 +151,8 @@ Move StepToClosest(UnitDto unit, UnitDto closest, MoveRequest request)
 
     var neighbors = unit.Location.Neighbors();
 
-    while (request.Units.Any(u => u.Location == target))
-    {
+    while (state.Units.Any(u => u.Location == target))
+    { 
         if (neighbors.Any())
         {
             var i = rnd.Next(0, neighbors.Count() - 1);
@@ -170,7 +169,7 @@ Move StepToClosest(UnitDto unit, UnitDto closest, MoveRequest request)
     return move;
 }
 
-Move AttackClosest(UnitDto unit, UnitDto closest)
+Move AttackClosest(Unit unit, Unit closest)
 {
     var attack = new Move(MoveType.Attack, unit.Id, closest.Location);
     return attack;
