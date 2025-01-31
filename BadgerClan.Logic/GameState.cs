@@ -19,6 +19,8 @@ public class GameState
 
     public int TeamCount { get { return TeamList.Count(); } }
     public IEnumerable<string> TeamNames => TeamList.Select(t => t.Name);
+
+    public List<GameLog> Logs { get; private set; } = [];
     private bool isGameOver;
     public bool IsGameOver
     {
@@ -125,6 +127,7 @@ public class GameState
     {
         TeamList.Add(team);
         turnOrder.Add(team.Id);
+        GameChanged?.Invoke(this);
     }
 
     public void LayoutStartingPositions(List<string> units)

@@ -28,6 +28,10 @@ A simple game of hexagonal tiles.
 1. Notice that the terminal window with your Sample BadgerClan Bot is starting to spit out logs. That shows the server is talking to the client.  
     ![Sample client bot output](docs/clientOutput.png)
 
+## Demo - How you can run this on your machine
+![Demo video](docs/BadgerClanDemo.gif)
+> Don't forget to set the startup project to "Client and Server" (not BadgerClan.Client or BadgerClan.Web)
+
 ## Customizing your bot
 1. Navigate to BadgerClan.Client and open its Program.cs file
 1. Look for the comment that says "Your code goes right here".
@@ -46,3 +50,50 @@ A simple game of hexagonal tiles.
 
 ## Further Information
 Coordinate System: https://www.redblobgames.com/grids/hexagons/
+
+
+## Development Work
+
+### Game Design
+- [ ] After some rounds of no units dieing, every Unit loses one hitpoint
+- [ ] If everyone dies as the same time (stalemate) tiebreakers are
+    - [ ] Team with most kills
+    - [ ] Most units before final hitpoint loss
+- [ ] Track number of kills
+- [x] Improve effectiveness of Medpacs
+
+### Features
+- [ ] Limit the number of players
+- [ ] Ability to boot players from a game that hasn't started
+- [x] Host can end the game from the game page, in cases of stalemate or false start
+- [ ] Timeout the calls to clients
+- [ ] Limit the size of the client move list
+- [ ] Don't make calls to dead teams
+- [ ] Ability for the host to restart the game with the same players
+- [ ] Add a game leader board
+- [ ] Game Log 
+
+- [x] Delete the weather and counter page
+
+
+### Bugs
+- [ ] If you click the join button after start, the UI is odd
+- [ ] Units can be placed off the board, if there are lots of units
+- [ ] Validate the client endpoint with a request/response
+- [ ] Limit the characters for name and urls
+- [X] If there are multiple games created but not started, the radio buttons don't work right
+- [ ] Game does not declare the correct winner
+- [x] Create game component not properly listening to game state change, specifically if another person adds a new team
+- [X] Only the host should have the start game button
+- [ ] A bad response from the client crashes causes an exception that stops the server
+- [ ] Review GameEngine.ProcessTurn(), Attack does not have the same rounding benefit as Walk, is that intentional?
+
+### Documentation
+- [x] Example tutorial for moving around
+- [ ] Example tutorial for determining boundaries
+- [x] Example tutorial for identifying nearest enemies
+- [x] Example tutorial for a sample bot
+
+### Code Quality
+- [ ] Rename Unit.Moves to ActionsRemainingThisTurn (or something similar)
+- [ ] Rename AttackCount to ActionsCostPerAttack (or something similar)

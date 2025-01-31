@@ -1,5 +1,7 @@
 ﻿
 
+using System.ComponentModel;
+
 namespace BadgerClan.Logic;
 
 public class GameEngine
@@ -43,8 +45,16 @@ public class GameEngine
                     if (canMove && defender == null &&
                         state.IsOnBoard(movedLocation))
                     {
+                        var startingLocation = unit.Location;
                         unit.Location = movedLocation;
                         unit.Moves -= distance;
+                        state.Logs.Add(new GameLog(
+                            TurnNumber: state.TurnNumber,
+                            Type: LogType.Moved,
+                            UnitId: unit.Id,
+                            SourceCoordinate: startingLocation,
+                            DestinationCoordinate: movedLocation
+                        ));
                     }
                     break;
 
@@ -90,8 +100,17 @@ public class GameEngine
         state.IncrementTurn();
     }
 
+    private const int MAX_HEALING = 15;
+    private const int SQUAD_SIZE = 6;
     public static int CalculateMeds(int unitsLeft, int totalUnits)
     {
-        return (unitsLeft + 5) / 10;
+        double units = unitsLeft - SQUAD_SIZE;
+        double total = totalUnits - SQUAD_SIZE;
+        double percentDead = units / total;
+
+        double healingFactor = Math.Sin((Math.PI / 2) * percentDead);
+        int healing = (int)(MAX_HEALING * healingFactor);
+
+        return healing > 0 ? healing : 0;
     }
 }

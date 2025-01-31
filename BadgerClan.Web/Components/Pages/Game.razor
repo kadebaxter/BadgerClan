@@ -2,8 +2,13 @@
 @using BadgerClan.Web.Components.GameComponents
 @inject Lobby lobby
 @inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUserService
 
 <h3>Game: @game.Name</h3>
+@if (game != null && game.TeamList.Count > 1 && game.TurnNumber == 0 && lobby.UserCreatedGame(CurrentUserService.CurrentUserId, game))
+{
+    <button class="btn btn-primary" @onclick=@(() => lobby.StartGame(CurrentUserService.CurrentUserId, game))>Start Game</button>
+}
 @if (game.IsGameOver)
 {
     <h2 class="text-success">@game.CurrentTeam.Name wins!</h2>
@@ -11,6 +16,10 @@
 else
 {
     <p>Turn: @game.TurnNumber</p>
+    @if(isGameOwner)
+    {
+        <button class="btn btn-outline-warning" @onclick=stopGame>Stop Game</button>
+    }
 }
 
 <BoardComponent State=game />
@@ -20,6 +29,8 @@ else
     public required string GameId { get; set; }
 
     public required GameState game;
+
+    bool isGameOwner => lobby.UserCreatedGame(CurrentUserService.CurrentUserId, game);
 
     protected override void OnParametersSet()
     {
@@ -33,4 +44,6 @@ else
         game.GameChanged += (_) => InvokeAsync(StateHasChanged);
         game.GameEnded += (_) => InvokeAsync(StateHasChanged);
     }
+
+    void stopGame() => lobby.StopGame(CurrentUserService.CurrentUserId, game);
 }
