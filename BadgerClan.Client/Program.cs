@@ -85,13 +85,13 @@ app.MapPost("/", (GameState request) =>
                 myMoves.Add(new Move(MoveType.Walk, unit.Id, target));
                 myMoves.Add(AttackClosest(unit, closest));
             }
-            else if (closest.Location.Distance(unit.Location) <= 4)
+            else if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
             {
                 //Console.WriteLine($"{unit.Health}:Health, {closest.Health}:EnemyHealth");
-                myMoves.Add(StepToClosest(unit, closest, request));
+                myMoves.Add(AttackClosest(unit, closest));
                 myMoves.Add(AttackClosest(unit, closest));
             }
-            else if (request.Medpacs > 0 && unit.Health < unit.MaxHealth)
+            else if (request.Medpacs > 0 && unit.Health < unit.MaxHealth / 2)
             {
                 Console.WriteLine("Used MedPac");
                 myMoves.Add(new Move(MoveType.Medpac, unit.Id, unit.Location));
