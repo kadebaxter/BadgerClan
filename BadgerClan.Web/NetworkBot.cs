@@ -3,7 +3,11 @@ using BadgerClan.Logic.Bot;
 
 public class NetworkBot : IBot
 {
-    HttpClient client = new();
+    HttpClient client = new()
+    { 
+        Timeout = TimeSpan.FromSeconds(.5)
+    };
+
     public NetworkBot(Uri endpoint)
     {
         client.BaseAddress = endpoint;
@@ -34,7 +38,8 @@ public class NetworkBot : IBot
             state.TurnNumber,
             state.Id.ToString(),
             state.Dimension,
-            state.CurrentTeam.Medpacs
+            state.CurrentTeam.Medpacs,
+            state.NextMedpac
         );
         var response = await client.PostAsJsonAsync("", moveRequest);
         MoveResponse moveResponse;
