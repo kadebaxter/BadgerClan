@@ -54,12 +54,16 @@ app.MapPost("/", (GameState request) =>
             myTeam.Add(unit);
         }
     }
+    var pointman = myTeam.OrderBy(u => u.Id).FirstOrDefault();
+    Unit closest = null;
+    if (pointman != null)
+    {
+        closest = enemies.OrderBy(u => u.Location.Distance(pointman.Location)).FirstOrDefault();
+    }
 
 
     foreach (Unit unit in myTeam.OrderByDescending(u => u.Type == "Knight"))
     {
-        var closest = enemies.OrderBy(u => u.Location.Distance(unit.Location)).FirstOrDefault();
-        var pointman = myTeam.OrderBy(u => u.Id).FirstOrDefault();
         Console.WriteLine($"Board:{request.BoardSize}, UnitR:{unit.Location.R}, UnitQ:{unit.Location.Q}");
         if (closest != null)
         {
