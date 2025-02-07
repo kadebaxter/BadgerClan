@@ -55,16 +55,17 @@ app.MapPost("/", (GameState request) =>
         }
     }
     var pointman = myTeam.OrderBy(u => u.Id).FirstOrDefault();
-    Unit closest = null;
-    if (pointman != null)
-    {
-        closest = enemies.OrderBy(u => u.Location.Distance(pointman.Location)).FirstOrDefault();
-    }
+    //Unit closest = null;
+    //if (pointman != null)
+    //{
+    //    closest = enemies.OrderBy(u => u.Location.Distance(pointman.Location)).FirstOrDefault();
+    //}
 
 
     foreach (Unit unit in myTeam.OrderByDescending(u => u.Type == "Knight"))
     {
-        Console.WriteLine($"Board:{request.BoardSize}, UnitR:{unit.Location.R}, UnitQ:{unit.Location.Q}");
+        var closest = enemies.OrderBy(u => u.Location.Distance(pointman.Location)).FirstOrDefault();
+        //Console.WriteLine($"Board:{request.BoardSize}, UnitR:{unit.Location.R}, UnitQ:{unit.Location.Q}");
         if (closest != null)
         {
             var closestTeam = enemies.Where(u => u.Team == closest.Team);
@@ -74,34 +75,42 @@ app.MapPost("/", (GameState request) =>
                 unit.Location.Distance(pointman.Location) > 5)
             {
                 //Don't split up
+                Console.WriteLine("Follow");
                 var toward = unit.Location.Toward(pointman.Location);
                 myMoves.Add(new Move(MoveType.Walk, unit.Id, toward));
                 myMoves.Add(new Move(MoveType.Walk, unit.Id, toward.Toward(pointman.Location)));
             }
-            else if (myTeam.Count() <= closestTeam.Count())
-            {
-                myMoves.Add(StepAwayWithCircling(unit, closest.Location, request));
-            }
-            else if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
-            {
-                //Archers run away from knights
-                var target = unit.Location.Away(closest.Location);
-                myMoves.Add(new Move(MoveType.Walk, unit.Id, target));
-                myMoves.Add(AttackClosest(unit, closest));
-            }
-            else if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
+            if (closest.Location.Distance(unit.Location) <= unit.AttackDistance)
             {
                 //Console.WriteLine($"{unit.Health}:Health, {closest.Health}:EnemyHealth");
+                Console.WriteLine("Attacked");
                 myMoves.Add(AttackClosest(unit, closest));
                 myMoves.Add(AttackClosest(unit, closest));
             }
-            else if (request.Medpacs > 0 && unit.Health < unit.MaxHealth / 2)
+            if (unit.Type == "Archer" && closest.Location.Distance(unit.Location) == 1)
+            {
+                //Archers run away from knights
+                //var target = unit.Location.Away(closest.Location);
+                //myMoves.Add(new Move(MoveType.Walk, unit.Id, target));
+                Console.WriteLine("Archer Attacked");
+                myMoves.Add(StepAwayWithCircling(unit, closest.Location, request));
+                myMoves.Add(AttackClosest(unit, closest));
+            }
+            if (myTeam.Count() <= closestTeam.Count() && closest.Location.Distance(unit.Location) <= 10)
+            {
+                Console.WriteLine("Running");
+                myMoves.Add(StepAwayWithCircling(unit, closest.Location, request));
+                myMoves.Add(StepAwayWithCircling(unit, closest.Location, request));
+            }
+            if (request.Medpacs > 0 && unit.Health < unit.MaxHealth / 2)
             {
                 Console.WriteLine("Used MedPac");
+                myMoves.Add(StepAwayWithCircling(unit, closest.Location, request));
                 myMoves.Add(new Move(MoveType.Medpac, unit.Id, unit.Location));
             }
             else
             {
+                Console.WriteLine("Else");
                 myMoves.Add(StepToClosest(unit, closest, request));
                 myMoves.Add(AttackClosest(unit, closest));
             }
